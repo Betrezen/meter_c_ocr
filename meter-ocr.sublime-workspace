@@ -1,0 +1,365 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"pr",
+				"printf\tprintf …"
+			],
+			[
+				"w",
+				"width"
+			],
+			[
+				"bi",
+				"png_binary_image"
+			],
+			[
+				"ma",
+				"malloc"
+			],
+			[
+				"wr",
+				"write_png_file"
+			],
+			[
+				"pro",
+				"process_file"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"contents": "#include <stdlib.h>\n#include <stdio.h>\n#include <string.h>\n\n#include \"png.h\"\n#include \"pngwrapper.h\"\n\nint main(int argc, char **argv)\n{\n    if (argc != 2)\n        abort_(\"Usage: program_name <file_in>\");\n\n    int* width;\n    int* height;\n    png_structp* png_ptr;\n    png_infop* info_ptr;\n    png_byte* color_type;\n    png_byte* bit_depth;\n\n    png_bytep* row_pointers;\n    char* png_binary_image;\n\n\n    int position = 0;\n    int ymin = 175;\n    int ymax = 196;\n    int xmin = 66;\n    int xmax = 182;\n\n    read_png_file(argv[1]);\n    process_file(132);\n    \n    for (y=0; y<height; y++) {\n        for (x=0; x<width; x++) {\n            position = y*width + x;\n            if (y > ymin && y < ymax && x > xmin && x < xmax){\n                if (png_binary_image[position] > 0){\n                    printf(\"-\");\n                }\n                else{\n                    printf(\"*\");\n                }\n            }\n        }\n        if (y > ymin && y < ymax){\n            printf(\"\\n\");\n        }\n    }\n\n    //printf(\"%d, %s\\n\",argc, argv[1]);\n    return 0;\n}\n",
+			"file": "test.c",
+			"file_size": 1040,
+			"file_write_time": 131206922531341723,
+			"settings":
+			{
+				"buffer_size": 1057,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "#include <stdlib.h>\n#include <stdio.h>\n#include <string.h>\n\n#include \"png.h\"\n#include \"pngwrapper.h\"\n\nvoid abort_(const char * s, ...)\n{\n        va_list args;\n        va_start(args, s);\n        vfprintf(stderr, s, args);\n        fprintf(stderr, \"\\n\");\n        va_end(args);\n        abort();\n}\nvoid read_png_file(char* file_name,\n                   int* width, int* height,\n                   png_byte* color_type,\n                   png_byte* bit_depth,\n                   png_bytep* row_pointers,\n                   char* png_binary_image)\n{\n    int x, y;\n    png_structp png_ptr;\n    png_infop info_ptr;    \n    int number_of_passes;\n    unsigned char header[8];    // 8 is the maximum size that can be checked\n\n    // open file and test for it being a png\n    FILE *fp = fopen(file_name, \"rb\");\n    if (!fp)\n            abort_(\"File %s could not be opened for reading\", file_name);\n    fread(header, 1, 8, fp);\n    if (png_sig_cmp(header, 0, 8))\n            abort_(\"File %s is not recognized as a PNG file\", file_name);\n    printf(\"png header is OK\\n\");\n\n    // initialize stuff\n    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);\n\n    if (!png_ptr)\n            abort_(\"png_create_read_struct failed\");\n\n    info_ptr = png_create_info_struct(png_ptr);\n    if (!info_ptr)\n            abort_(\"png_create_info_struct failed\");\n\n    if (setjmp(png_jmpbuf(png_ptr)))\n            abort_(\"Error during init_io\");\n\n    png_init_io(png_ptr, fp);\n    png_set_sig_bytes(png_ptr, 8);\n    png_read_info(png_ptr, info_ptr);\n\n    width = png_get_image_width(png_ptr, info_ptr);\n    height = png_get_image_height(png_ptr, info_ptr);\n    color_type = png_get_color_type(png_ptr, info_ptr);\n    bit_depth = png_get_bit_depth(png_ptr, info_ptr);\n    number_of_passes = png_set_interlace_handling(png_ptr);\n    png_read_update_info(png_ptr, info_ptr);\n    printf(\"width=%d, height=%d, color_type=%d, bit_depth=%d, number_of_passes=%d\\n\", \n        width, height, color_type, bit_depth, number_of_passes);\n\n\n    // read file\n    if (setjmp(png_jmpbuf(png_ptr)))\n            abort_(\"Error during read_image\");\n\n    png_binary_image = (char*) malloc(sizeof(char) * width * height);\n\n    row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * height);\n    for (y=0; y<height; y++)\n            row_pointers[y] = (png_byte*) malloc(png_get_rowbytes(png_ptr, info_ptr));\n\n    png_read_image(png_ptr, row_pointers);\n\n    fclose(fp);\n}\n\n\nvoid write_png_file(char* file_name,\n                    int* width, int* height,\n                    png_byte* color_type,\n                    png_byte* bit_depth,\n                    png_bytep* row_pointers)\n{\n    int x, y;\n    png_structp png_ptr;\n    png_infop info_ptr;    \n    // create file\n    FILE *fp = fopen(file_name, \"wb\");\n    if (!fp)\n            abort_(\"[write_png_file] File %s could not be opened for writing\", file_name);\n    // initialize stuff\n    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);\n    if (!png_ptr)\n            abort_(\"[write_png_file] png_create_write_struct failed\");\n    info_ptr = png_create_info_struct(png_ptr);\n    if (!info_ptr)\n            abort_(\"[write_png_file] png_create_info_struct failed\");\n    if (setjmp(png_jmpbuf(png_ptr)))\n            abort_(\"[write_png_file] Error during init_io\");\n    png_init_io(png_ptr, fp);\n    // write header\n    if (setjmp(png_jmpbuf(png_ptr)))\n            abort_(\"[write_png_file] Error during writing header\");\n\n    png_set_IHDR(png_ptr, info_ptr, width, height,\n                 bit_depth, color_type, PNG_INTERLACE_NONE,\n                 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);\n    png_write_info(png_ptr, info_ptr);\n    // write bytes\n    if (setjmp(png_jmpbuf(png_ptr)))\n            abort_(\"[write_png_file] Error during writing bytes\");\n    png_write_image(png_ptr, row_pointers);\n    // end write\n    if (setjmp(png_jmpbuf(png_ptr)))\n            abort_(\"[write_png_file] Error during end of write\");\n    png_write_end(png_ptr, NULL);\n    // cleanup heap allocation\n    for (y=0; y<height; y++)\n            free(row_pointers[y]);\n    free(row_pointers);\n    fclose(fp);\n}\n\n\nvoid process_file(int threshold,\n                  png_structp* png_ptr,\n                  png_infop* info_ptr, \n                  int* width, int* height,\n                  png_bytep* row_pointers,\n                  char* png_binary_image)\n{\n    int rgba = 1;\n    int binary_value = 0;\n    float grayvalue = 0.0;\n    int position = 0;\n    int x, y;        \n\n    if (png_get_color_type(*png_ptr, *info_ptr) == PNG_COLOR_TYPE_RGB)\n        rgba = 0;\n        //abort_(\"input file is PNG_COLOR_TYPE_RGB but must be PNG_COLOR_TYPE_RGBA - lacks the alpha channel)\");\n\n    if (png_get_color_type(*png_ptr, *info_ptr) != PNG_COLOR_TYPE_RGBA)\n        rgba = 0;\n        //abort_(\"color_type of input file must be PNG_COLOR_TYPE_RGBA (%d) (is %d)\", PNG_COLOR_TYPE_RGBA, png_get_color_type(png_ptr, info_ptr));\n\n    for (y=0; y<height; y++) {\n        png_byte* row = row_pointers[y];\n        for (x=0; x<width; x++) {\n            png_byte* ptr = &(row[x*4]);\n            grayvalue = 0.299*ptr[0] + 0.587*ptr[1] + 0.114*ptr[2];\n            binary_value = 0;\n            if (grayvalue > threshold){\n                binary_value = 1;\n            }\n            if (rgba > 0){                              \n                printf(\"Pixel at position [ %d - %d ] has RGBA values: %d - %d - %d - %d\\n\", x, y, ptr[0], ptr[1], ptr[2], ptr[3]);\n            }\n            else{\n                // Y'=0.299R+0.587G+0.114B  OR  Y'=0.2126R+0.7152G+0.0722B\n                //printf(\"Pixel at position [ %d - %d ] has RGB values: %d - %d - %d\\n\", x, y, ptr[0], ptr[1], ptr[2]);\n                //write binary image\n                position = y*width + x;\n                png_binary_image[position] = binary_value;\n            }\n        }\n    }\n}\n",
+			"file": "pngwrapper.c",
+			"file_size": 5833,
+			"file_write_time": 131206922727849908,
+			"settings":
+			{
+				"buffer_size": 5857,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "pngwrapper.h",
+			"settings":
+			{
+				"buffer_size": 795,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/C++/C++ Single File.sublime-build",
+				""
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 392.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/media/krozin/xdata/@Projects/@Python/meter_ocr"
+	],
+	"file_history":
+	[
+		"/media/krozin/xdata/@Projects/@Python/meter_ocr/png_wrapper.h",
+		"/media/krozin/xdata/@Projects/@Python/pylib.py",
+		"/media/krozin/xdata/@share/APUKZIG-2121 Display of information/MeraTests/helpers/pylib.py",
+		"/home/krozin/.cache/.fr-AFPWiZ/xunitparser-1.3.3/xunitparser.py",
+		"/home/krozin/Documents/tests_15122.json",
+		"/home/krozin/@Git/KROZIN/SimplePipeline/simplepipeline/input.py",
+		"/home/krozin/computer_vision_demo/videoproc/install-deps.sh",
+		"/media/krozin/MULTIBOOT/@Git/MIRANTIS/unified_testresult_reporter/pylib.py",
+		"/home/krozin/Documents/15122_result.json",
+		"/home/krozin/Documents/15122_bugs.json",
+		"/home/krozin/Downloads/nosetests.xml",
+		"/media/krozin/MULTIBOOT/@krozin/megakeys.nop",
+		"/home/krozin/Documents/10.0.swarm.runner_latest_started_tests_descriptions.json",
+		"/media/krozin/46C0EC23C0EC1B47/Users/krozi/OneDrive/@Projects/@Python/pylib.py",
+		"/home/krozin/Dropbox/vpn/krozin_dev.pub",
+		"/media/krozin/MULTIBOOT/@Git/MIRANTIS/trep/trep/settings.py",
+		"/media/krozin/MULTIBOOT/@Git/MIRANTIS/testrail_reporter/testrail_reporter/reporter.py",
+		"/media/krozin/MULTIBOOT/@Git/MIRANTIS/trep/trep/testrail/client.py",
+		"/media/krozin/MULTIBOOT/@Git/MIRANTIS/trep/configs/trep.yaml",
+		"/home/krozin/.cache/.fr-4Of7Ci/xunitparser-1.3.3/xunitparser.py",
+		"/media/krozin/MULTIBOOT/@Git/MIRANTIS/testrail_reporter/testrail_reporter/testrail/client.py",
+		"/media/krozin/MULTIBOOT/@Git/MIRANTIS/testrail_reporter/testrail_reporter/testrail/__init__.py",
+		"/media/krozin/MULTIBOOT/@Git/MIRANTIS/testrail_reporter/setup.py",
+		"/media/krozin/MULTIBOOT/@Git/MIRANTIS/testrail_reporter/bin/report",
+		"/media/krozin/MULTIBOOT/@Git/MIRANTIS/testrail_reporter/setup.cfg",
+		"/etc/openvpn/krozin-udp.conf",
+		"/home/krozin/Documents/vpn_mirantis/krozin-udp.ovpn",
+		"/home/krozin/Documents/vpn_mirantis/krozin-udp.conf",
+		"/media/krozin/MULTIBOOT/test_multi.py"
+	],
+	"find":
+	{
+		"height": 34.0
+	},
+	"find_in_files":
+	{
+		"height": 90.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"\t"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"    "
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "test.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1057,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								462,
+								462
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "pngwrapper.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5857,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								60,
+								60
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "pngwrapper.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 795,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								655,
+								655
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 21.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 191.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "meter-ocr.sublime-project",
+	"replace":
+	{
+		"height": 62.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 224.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
