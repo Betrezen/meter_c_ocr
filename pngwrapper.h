@@ -5,6 +5,8 @@
 void abort_(const char * s, ...);
 
 void read_png_file(char* file_name,
+                   png_structp* png_ptr,
+                   png_infop* info_ptr,
                    int* width, int* height,
                    png_byte* color_type,
                    png_byte* bit_depth,
@@ -12,6 +14,8 @@ void read_png_file(char* file_name,
                    char* png_binary_image);
 
 void write_png_file(char* file_name,
+                    png_structp* png_ptr,
+                    png_infop* info_ptr,
                     int* width, int* height,
                     png_byte* color_type,
                     png_byte* bit_depth,
