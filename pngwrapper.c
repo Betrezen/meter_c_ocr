@@ -5,8 +5,7 @@
 #include "png.h"
 #include "pngwrapper.h"
 
-
-void abort_(const char * s, ...)
+void abortme(const char * s, ...)
 {
         va_list args;
         va_start(args, s);
@@ -32,24 +31,27 @@ void read_png_file(char* file_name,
     // open file and test for it being a png
     FILE *fp = fopen(file_name, "rb");
     if (!fp)
-            abort_("File %s could not be opened for reading", file_name);
+            abortme("File %s could not be opened for reading", file_name);
     fread(header, 1, 8, fp);
     if (png_sig_cmp(header, 0, 8))
-            abort_("File %s is not recognized as a PNG file", file_name);
-    printf("png header is OK\n");
+            abortme("File %s is not recognized as a PNG file", file_name);
+    //printf("png header is OK\n");
 
     // initialize stuff
     *png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    //printf("png_ptr is OK \n");
 
     if (!*png_ptr)
-            abort_("png_create_read_struct failed");
+            abortme("png_create_read_struct failed");
 
     *info_ptr = png_create_info_struct(*png_ptr);
+    //printf("info_ptr is OK \n");
+
     if (!*info_ptr)
-            abort_("png_create_info_struct failed");
+            abortme("png_create_info_struct failed");
 
     if (setjmp(png_jmpbuf(*png_ptr)))
-            abort_("Error during init_io");
+            abortme("Error during init_io");
 
     png_init_io(*png_ptr, fp);
     png_set_sig_bytes(*png_ptr, 8);
@@ -61,65 +63,69 @@ void read_png_file(char* file_name,
     *bit_depth = png_get_bit_depth(*png_ptr, *info_ptr);
     number_of_passes = png_set_interlace_handling(*png_ptr);
     png_read_update_info(*png_ptr, *info_ptr);
-    printf("width=%d, height=%d, color_type=%d, bit_depth=%d, number_of_passes=%d\n", 
-        *width, *height, *color_type, *bit_depth, number_of_passes);
+    //printf("width=%d, height=%d, color_type=%d, bit_depth=%d, number_of_passes=%d\n", 
+    //    *width, *height, *color_type, *bit_depth, number_of_passes);
 
 
     // read file
     if (setjmp(png_jmpbuf(*png_ptr)))
-            abort_("Error during read_image");
+            abortme("Error during read_image");
 
+    //printf("read_png_file step n \n");
     png_binary_image = (char*) malloc(sizeof(char) * (*width) * (*height));
-
     row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * (*height));
+    //printf("read_png_file step m \n");
+
     for (y=0; y<(*height); y++)
             row_pointers[y] = (png_byte*) malloc(png_get_rowbytes(*png_ptr, *info_ptr));
 
+    //printf("read_png_file step s \n");
     png_read_image(*png_ptr, row_pointers);
-
     fclose(fp);
+    //printf("read_png_file step t \n");    
 }
 
 
 void write_png_file(char* file_name,
-                    png_structp* png_ptr,
-                    png_infop* info_ptr,
                     int width, int height,
                     png_byte color_type,
                     png_byte bit_depth,
                     png_bytep* row_pointers)
 {
     int x, y;
+    png_structp png_ptr;
+    png_infop info_ptr;
+
     // create file
     FILE *fp = fopen(file_name, "wb");
     if (!fp)
-            abort_("File %s could not be opened for writing", file_name);
+            abortme("File %s could not be opened for writing", file_name);
     // initialize stuff
-    *png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (!*png_ptr)
-            abort_("png_create_write_struct failed");
-    *info_ptr = png_create_info_struct(*png_ptr);
-    if (!*info_ptr)
-            abort_("png_create_info_struct failed");
-    if (setjmp(png_jmpbuf(*png_ptr)))
-            abort_("Error during init_io");
-    png_init_io(*png_ptr, fp);
+    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png_ptr)
+            abortme("png_create_write_struct failed");
+    info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr)
+            abortme("png_create_info_struct failed");
+    if (setjmp(png_jmpbuf(png_ptr)))
+            abortme("Error during init_io");
+    png_init_io(png_ptr, fp);
     // write header
-    if (setjmp(png_jmpbuf(*png_ptr)))
-            abort_("Error during writing header");
+    if (setjmp(png_jmpbuf(png_ptr)))
+            abortme("Error during writing header");
 
-    png_set_IHDR(*png_ptr, *info_ptr, width, height,
+    png_set_IHDR(png_ptr, info_ptr, width, height,
                  bit_depth, color_type, PNG_INTERLACE_NONE,
                  PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-    png_write_info(*png_ptr, *info_ptr);
+    png_write_info(png_ptr, info_ptr);
     // write bytes
-    if (setjmp(png_jmpbuf(*png_ptr)))
-            abort_("Error during writing bytes");
-    png_write_image(*png_ptr, row_pointers);
+    if (setjmp(png_jmpbuf(png_ptr)))
+            abortme("Error during writing bytes");
+    png_write_image(png_ptr, row_pointers);
     // end write
-    if (setjmp(png_jmpbuf(*png_ptr)))
-            abort_("Error during end of write");
-    png_write_end(*png_ptr, NULL);
+    if (setjmp(png_jmpbuf(png_ptr)))
+            abortme("Error during end of write");
+    png_write_end(png_ptr, NULL);
     // cleanup heap allocation
     for (y=0; y<height; y++)
             free(row_pointers[y]);
@@ -129,25 +135,19 @@ void write_png_file(char* file_name,
 
 
 void process_file(int threshold,
-                  png_structp* png_ptr,
-                  png_infop* info_ptr, 
                   int width, int height,
                   png_bytep* row_pointers,
                   char* png_binary_image)
 {
-    int rgba = 1;
+    int rgba = 0;
     int binary_value = 0;
     float grayvalue = 0.0;
     int position = 0;
     int x, y;        
 
-    if (png_get_color_type(*png_ptr, *info_ptr) == PNG_COLOR_TYPE_RGB)
-        rgba = 0;
-        //abort_("input file is PNG_COLOR_TYPE_RGB but must be PNG_COLOR_TYPE_RGBA - lacks the alpha channel)");
+    printf("process_file: start ok");
 
-    if (png_get_color_type(*png_ptr, *info_ptr) != PNG_COLOR_TYPE_RGBA)
-        rgba = 0;
-        //abort_("color_type of input file must be PNG_COLOR_TYPE_RGBA (%d) (is %d)", PNG_COLOR_TYPE_RGBA, png_get_color_type(png_ptr, info_ptr));
+    printf("process_file: init ok");
 
     for (y=0; y<height; y++) {
         png_byte* row = row_pointers[y];
@@ -170,4 +170,5 @@ void process_file(int threshold,
             }
         }
     }
+
 }
