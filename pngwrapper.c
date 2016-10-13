@@ -21,8 +21,8 @@ void read_png_file(char* file_name,
                    int* width, int* height,
                    png_byte* color_type,
                    png_byte* bit_depth,
-                   png_bytep* row_pointers,
-                   char* png_binary_image)
+                   png_bytepp* row_pointers,
+                   char** png_binary_image)
 {
     int x, y;
     int number_of_passes;
@@ -72,15 +72,16 @@ void read_png_file(char* file_name,
             abortme("Error during read_image");
 
     //printf("read_png_file step n \n");
-    png_binary_image = (char*) malloc(sizeof(char) * (*width) * (*height));
-    row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * (*height));
+    *png_binary_image = (char*) malloc(sizeof(char) * (*width) * (*height));
+    *row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * (*height));
     //printf("read_png_file step m \n");
 
+	png_uint_32 row_size = png_get_rowbytes(*png_ptr, *info_ptr);
     for (y=0; y<(*height); y++)
-            row_pointers[y] = (png_byte*) malloc(png_get_rowbytes(*png_ptr, *info_ptr));
+            (*row_pointers)[y] = (png_byte*) malloc(row_size);
 
     //printf("read_png_file step s \n");
-    png_read_image(*png_ptr, row_pointers);
+    png_read_image(*png_ptr, *row_pointers);
     fclose(fp);
     //printf("read_png_file step t \n");    
 }
@@ -90,7 +91,7 @@ void write_png_file(char* file_name,
                     int width, int height,
                     png_byte color_type,
                     png_byte bit_depth,
-                    png_bytep* row_pointers)
+                    png_bytepp row_pointers)
 {
     int x, y;
     png_structp png_ptr;
@@ -136,7 +137,7 @@ void write_png_file(char* file_name,
 
 void process_file(int threshold,
                   int width, int height,
-                  png_bytep* row_pointers,
+                  png_bytepp row_pointers,
                   char* png_binary_image)
 {
     int rgba = 0;

@@ -9,10 +9,10 @@
 
 int main(int argc, char **argv)
 {
-    if (argc != 2){
+    /*if (argc != 2){
         printf("Usage: program_name <file_in>");
         return 1;
-    }
+    }*/
 
 
     int x, y;
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     png_byte color_type;
     png_byte bit_depth;
 
-    png_bytep* row_pointers;
+    png_bytepp row_pointers;
     char* png_binary_image;
 
 
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     int xmin = 66;
     int xmax = 182;
 
-    read_png_file(argv[1], &png_ptr, &info_ptr, &width, &height, &color_type, &bit_depth, row_pointers, png_binary_image);
+    read_png_file("image.png"/*argv[1]*/, &png_ptr, &info_ptr, &width, &height, &color_type, &bit_depth, &row_pointers, &png_binary_image);
     printf("read_png_file competed is OK\n");
 
     process_file(THRESHOLD, width, height, row_pointers, png_binary_image);

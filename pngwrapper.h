@@ -9,18 +9,18 @@ void read_png_file(char* file_name,
                    int* width, int* height,
                    png_byte* color_type,
                    png_byte* bit_depth,
-                   png_bytep* row_pointers,
-                   char* png_binary_image);
+                   png_bytepp* row_pointers,
+                   char** png_binary_image);
 
 void write_png_file(char* file_name,
                     int width, int height,
                     png_byte color_type,
                     png_byte bit_depth,
-                    png_bytep* row_pointers);
+                    png_bytepp row_pointers);
 
 void process_file(int threshold,
                   int width, int height,
-                  png_bytep* row_pointers,
+                  png_bytepp row_pointers,
                   char* png_binary_image);
 
 #endif
