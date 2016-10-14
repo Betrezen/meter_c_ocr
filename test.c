@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     int xmin = 66;
     int xmax = 182;
 
-    read_png_file("image.png"/*argv[1]*/, &png_ptr, &info_ptr, &width, &height, &color_type, &bit_depth, &row_pointers, &png_binary_image);
+    read_png_file(argv[1], &png_ptr, &info_ptr, &width, &height, &color_type, &bit_depth, &row_pointers, &png_binary_image);
     printf("read_png_file competed is OK\n");
 
     process_file(THRESHOLD, width, height, row_pointers, png_binary_image);
