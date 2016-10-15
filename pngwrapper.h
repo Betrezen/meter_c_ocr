@@ -1,6 +1,8 @@
 #ifndef pngwrapper_h__
 #define pngwrapper_h__
 
+#define THRESHOLD_BINARY 132
+
 void abortme(const char * s, ...);
 
 void read_png_file(char* file_name,
