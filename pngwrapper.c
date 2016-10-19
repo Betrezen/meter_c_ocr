@@ -141,10 +141,10 @@ void process_file(int threshold,
                   char* png_binary_image)
 {
     int rgba = 0;
-    int binary_value = 0;
+    int binary_value = 1;
     float grayvalue = 0.0;
     int position = 0;
-    int x, y;        
+    int x, y;
 
     //printf("process_file: start ok");
 
@@ -155,9 +155,9 @@ void process_file(int threshold,
         for (x=0; x<width; x++) {
             png_byte* ptr = &(row[x*4]);
             grayvalue = 0.299*ptr[0] + 0.587*ptr[1] + 0.114*ptr[2];
-            binary_value = 0;
+            binary_value = 1;
             if (grayvalue > threshold){
-                binary_value = 1;
+                binary_value = 0;
             }
             if (rgba > 0){                              
                 //printf("Pixel at position [ %d - %d ] has RGBA values: %d - %d - %d - %d\n", x, y, ptr[0], ptr[1], ptr[2], ptr[3]);
