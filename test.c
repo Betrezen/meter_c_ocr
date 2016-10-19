@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     //draw_binary_image(png_binary_image, width, height, bbox);
     //printf("draw_binary_image competed is OK\n");
         
-    int bbox2[] = {66, 175, 81, 4};
+    int bbox2[4] = {66, 175, 81, 4};
     do_linerezation(png_binary_image, width, height, &dash_image, bbox2);
     printf("do_linerezation competed is OK\n");
 
