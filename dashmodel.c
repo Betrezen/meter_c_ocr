@@ -12,16 +12,19 @@ int do_linerezation(char* binary_image, int width, int height, int** dashs, int*
     //so. we shall need max = width * height * sizeof(int) memory
     //why int? because x, y can be more 1000. char <= 255
     //bbox  = [x,y,width, height] - crop bounding box
+    printf("do_linerezation step00");
+
     *dashs = (int*) malloc(sizeof(int) * width * height);
     int x,y;
     int i = 0;
     int mad = 0;
     int position = 0;    
 
-    int ymin = box[1]; //175;
-    int ymax = box[1] + box[3]; //196;
-    int xmin = box[0]; //66;
-    int xmax = box[0] + box[2]; //182;
+    printf("do_linerezation step0");
+    int ymin = *(box+1); //175;
+    int ymax = *(box+1) + *(box+3); //196;
+    int xmin = *box; //66;
+    int xmax = *box + *(box+2); //182;
 
     //seems nothing shall be crop
     if (ymin == ymax && xmin == xmax){
@@ -31,6 +34,7 @@ int do_linerezation(char* binary_image, int width, int height, int** dashs, int*
         xmax = width;
     }
 
+    printf("do_linerezation step1");
     for (y=0; y<height; y++) {
         mad = 0;
         for (x=0; x<width; x++) {
@@ -44,15 +48,16 @@ int do_linerezation(char* binary_image, int width, int height, int** dashs, int*
                         mad = 0;
                     }
                     else{
-                        dashs[i++] = x-mad;
-                        dashs[i++] = y;
-                        dashs[i++] = mad;
+                        *dashs[i++] = x-mad;
+                        *dashs[i++] = y;
+                        *dashs[i++] = mad;
                         mad=0;
                     }
                 }
             }
         }
     }
+    printf("do_linerezation step-latest");
 }
 
 int check_cross(int* line1, int* line2)

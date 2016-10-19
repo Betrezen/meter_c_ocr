@@ -146,9 +146,9 @@ void process_file(int threshold,
     int position = 0;
     int x, y;        
 
-    printf("process_file: start ok");
+    //printf("process_file: start ok");
 
-    printf("process_file: init ok");
+    //printf("process_file: init ok");
 
     for (y=0; y<height; y++) {
         png_byte* row = row_pointers[y];
@@ -160,7 +160,7 @@ void process_file(int threshold,
                 binary_value = 1;
             }
             if (rgba > 0){                              
-                printf("Pixel at position [ %d - %d ] has RGBA values: %d - %d - %d - %d\n", x, y, ptr[0], ptr[1], ptr[2], ptr[3]);
+                //printf("Pixel at position [ %d - %d ] has RGBA values: %d - %d - %d - %d\n", x, y, ptr[0], ptr[1], ptr[2], ptr[3]);
             }
             else{
                 // Y'=0.299R+0.587G+0.114B  OR  Y'=0.2126R+0.7152G+0.0722B
