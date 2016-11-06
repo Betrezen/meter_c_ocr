@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <limits.h>
 
 #include "dashmodel.h"
 
@@ -162,7 +163,7 @@ int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object
         dashes_one_level[i] = (dash**) malloc(MAX_DASHES * sizeof(dash*));
     }
     memset(num_dashes_one_level, 0, sizeof(int) * im_height);
-    memset(objects, 0, sizeof(object) * num_dashs);
+
     for (i = 0; i < num_dashs; ++i)
     {
         dashes_one_level[dashes[i].y][num_dashes_one_level[dashes[i].y]++] = &dashes[i];
@@ -210,24 +211,32 @@ int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object
 
     *ret_objects = objects;
     *ret_num_objs = num_objs;
+
+    for (int i = 0; i < im_height; ++i)
+    {
+        free(dashes_one_level[i]);
+    }
+    free(dashes_one_level);
+    free(num_dashes_one_level);
     return 0;
 }
 
-int get_bbox(int* dash_model, int box[4])
+void get_bbox(object* obj, int bbox[4])
 {
-    // we have dash model and we need return back bbox around of this model
-    /*
-    x_values = [i[0] for i in obj]
-    y_values = [i[1] for i in obj]
-    x_max_values = [i[0] + i[2] for i in obj]
-    x_min = min(x_values)
-    y_min = min(y_values)
-    x_max = max(x_max_values)
-    y_max = max(y_values)
-    return (x_min, y_min, x_max, y_max)
-    */
-    return 0;
+    int i;
+    bbox[0] = INT_MAX;
+    bbox[1] = INT_MAX;
+    bbox[2] = 0;
+    bbox[3] = 0;
+    for (i = 0; i < obj->dash_count; ++i)
+    {
+        bbox[0] = (obj->dashes[i]->x < bbox[0]) ? obj->dashes[i]->x : bbox[0];
+        bbox[1] = (obj->dashes[i]->y < bbox[1]) ? obj->dashes[i]->y : bbox[1];
+        bbox[2] = ((obj->dashes[i]->x + obj->dashes[i]->width) < bbox[2]) ? (obj->dashes[i]->x + obj->dashes[i]->width) : bbox[2];
+        bbox[3] = (obj->dashes[i]->y > bbox[3]) ? obj->dashes[i]->y : bbox[3];
+    }
 }
+
 //objects - list of objects whcih shall be combined
 int do_combination(int* objects)
 {

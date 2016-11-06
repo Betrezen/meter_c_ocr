@@ -27,10 +27,6 @@ typedef struct {
 
 typedef struct {
     int dash_count;
-    int bbox_x;
-    int bbox_y;
-    int bbox_width;
-    int bbox_height;
     dash* dashes[MAX_DASHES];
 } object;
 
@@ -48,7 +44,7 @@ int check_cross_objs(int* obj1, int* obj2);
 //       .....dash_count_n, bbox_xn, bbox_yn, widthn, heighn, dash_n1, dash_nm;]
 // **objects because  memory allocation
 int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object** ret_objects, int* ret_num_objs);
-int get_bbox(int* dash_model, int box[4]);
+void get_bbox(object* obj, int bbox[4]);
 //objects - list of objects whcih shall be combined
 int do_combination(int* objects);
 
