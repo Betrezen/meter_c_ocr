@@ -136,14 +136,121 @@ int check_cross_lists(int* obj1, int obj1_count, int* obj2, int obj2_count)
     return 0;
 }
 
+inline int min(int val1, int val2)
+{
+    return val1 < val2 ? val1 : val2;
+}
+inline int max(int val1, int val2)
+{
+    return val1 > val2 ? val1 : val2;
+}
+
+int intersection_in_levels
+(
+    int *num_obj1_dashes_on_level, int *num_obj2_dashes_on_level,
+    dash*** obj1_dashes_on_level, dash*** obj2_dashes_on_level,
+    int level1, int level2
+)
+{
+    int j, k;
+    int int_line_x1, int_line_x2;
+    for (j = 0; j < num_obj1_dashes_on_level[level1]; ++j)
+    {
+        for (k = 0; k < num_obj2_dashes_on_level[level2]; ++k)
+        {
+            int_line_x1 = max(obj1_dashes_on_level[level1][j]->x, obj2_dashes_on_level[level1][k]->x);
+            int_line_x2 = min(obj1_dashes_on_level[level1][j]->x + obj1_dashes_on_level[level1][j]->width,
+                              obj2_dashes_on_level[level2][k]->x + obj2_dashes_on_level[level2][k]->width);
+            if (int_line_x1 <= int_line_x2)
+            {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 // obj1 = [dash_count1, bbox_x1, bbox_y1, width1, heigh1, dash1...dashm]
-int check_cross_objs(int* obj1, int* obj2)
+int check_cross_objs(object* obj1, object* obj2, int im_height)
 {
     // if we dont have lines on the same y for both objects
     // or we dont have lines on y-1 and y for both objects
     // then dont need to do analysis because nothing can be compare
     // if we don't have the same lines in both objects then need find cross
-    return 0;
+
+    int i = 0, j, k;
+    int result;
+    int obj1_min_h = INT_MAX, obj1_max_h = 0;
+    int obj2_min_h = INT_MAX, obj2_max_h = 0;
+
+    int target_min, target_max;
+    int int_line_x1, int_line_x2;
+    int* num_obj1_dashes_on_level = (int*) malloc(sizeof(int) * im_height);
+    dash*** obj1_dashes_on_level = (dash***) malloc(sizeof(dash**) * im_height);
+    int* num_obj2_dashes_on_level = (int*) malloc(sizeof(int) * im_height);
+    dash*** obj2_dashes_on_level = (dash***) malloc(sizeof(dash**) * im_height);
+    for (i = 0; i < im_height; ++i)
+    {
+        obj1_dashes_on_level[i] = malloc(sizeof(dash*) * MAX_DASHES);
+        obj2_dashes_on_level[i] = malloc(sizeof(dash*) * MAX_DASHES);
+    }
+    memset(num_obj1_dashes_on_level, 0, im_height);
+    memset(num_obj2_dashes_on_level, 0, im_height);
+
+    for (i = 0; i < obj1->dash_count; ++i)
+    {
+        obj1_dashes_on_level[obj1->dashes[i]->y][num_obj1_dashes_on_level[obj1->dashes[i]->y]++] = obj1->dashes[i];
+        obj1_min_h = min(obj1_min_h, obj1->dashes[i]->y);
+        obj1_max_h = max(obj1_max_h, obj1->dashes[i]->y);
+    }
+
+    for (i = 0; i < obj2->dash_count; ++i)
+    {
+        obj2_dashes_on_level[i][num_obj2_dashes_on_level[i]++] = obj1->dashes[i];
+        obj2_min_h = min(obj2_min_h, obj2->dashes[i]->y);
+        obj2_max_h = max(obj2_max_h, obj2->dashes[i]->y);
+    }
+
+    target_max = min(obj1_max_h, obj2_max_h);
+    target_min = max(obj1_min_h, obj2_min_h);
+
+    if (target_min < target_max)
+    {
+        // Find intersected in one level
+        for (i = target_min; i < target_max && result == 0; ++i)
+        {
+            result = intersection_in_levels(
+                num_obj1_dashes_on_level, num_obj2_dashes_on_level,
+                obj1_dashes_on_level, obj2_dashes_on_level, i, i
+            ); // Check one level intersections
+            if (result == 0)
+            {
+                result = intersection_in_levels(
+                        num_obj1_dashes_on_level, num_obj2_dashes_on_level,
+                        obj1_dashes_on_level, obj2_dashes_on_level, i, i + 1
+                ); // Check neighb level intersections
+            }
+            if (result == 0)
+            {
+                result = intersection_in_levels(
+                        num_obj1_dashes_on_level, num_obj2_dashes_on_level,
+                        obj1_dashes_on_level, obj2_dashes_on_level, i, i - 1
+                ); // Check neighb level intersections
+            }
+        }
+    }
+
+    for (i = 0; i < im_height; ++i)
+    {
+        free(obj1_dashes_on_level[i]);
+        free(obj2_dashes_on_level[i]);
+    }
+    free(obj1_dashes_on_level);
+    free(obj2_dashes_on_level);
+    free(num_obj1_dashes_on_level);
+    free(num_obj2_dashes_on_level);
+
+    return result;
 }
 
 // objects = [dash_count1, bbox_x1, bbox_y1, width1, heigh1, dash1...dashm;
@@ -240,6 +347,7 @@ void get_bbox(object* obj, int bbox[4])
 //objects - list of objects whcih shall be combined
 int do_combination(int* objects)
 {
+
     return 0;
 }
 int do_objects_filtering(int* objects)
