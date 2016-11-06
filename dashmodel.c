@@ -1,11 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdint.h>
 
 #include "dashmodel.h"
 
 // dash = [x,y,width, ... x_n, y_n, width_n]
 // **dashs because  memory allocation otherwise malloc will replace addr
-int do_linerezation(char* binary_image, int width, int height, int** dashs, int box[4], int* dash_count)
+int do_linerezation(char* binary_image, int width, int height, dash** dashes, int box[4], int* dash_count)
 {
     //we assume worst case 2 point with signal separated by 1 point without
     //that means at least width*heigh/3. but we need to keep x,y,width.
@@ -14,7 +16,6 @@ int do_linerezation(char* binary_image, int width, int height, int** dashs, int 
     //bbox  = [x,y,width, height] - crop bounding box
 
     int x,y;
-    int i = 0;
     int mad = 0;
     int position = 0;
     *dash_count = 0;
@@ -32,7 +33,7 @@ int do_linerezation(char* binary_image, int width, int height, int** dashs, int 
         xmax = width;
     }
 
-    *dashs = (int*) malloc(sizeof(int) * width * height);
+    *dashes = (int*) malloc(sizeof(dash) * width * height);
 
     for (y=0; y<height; y++) {
         mad = 0;
@@ -47,9 +48,9 @@ int do_linerezation(char* binary_image, int width, int height, int** dashs, int 
                         mad = 0;
                     }
                     else{
-                        (*dashs)[i++] = x-mad;
-                        (*dashs)[i++] = y;
-                        (*dashs)[i++] = mad;
+                        (*dashes)[*dash_count].x = x-mad;
+                        (*dashes)[*dash_count].y = y;
+                        (*dashes)[*dash_count].width = mad;
                         ++(*dash_count);
                         //printf("x=%d, y=%d, w=%d\n", x,y,mad);
                         mad=0;
@@ -147,8 +148,68 @@ int check_cross_objs(int* obj1, int* obj2)
 // objects = [dash_count1, bbox_x1, bbox_y1, width1, heigh1, dash1...dashm;
 //       .....dash_count_n, bbox_xn, bbox_yn, widthn, heighn, dash_n1, dash_nm;]
 // **objects because  memory allocation
-int get_objects(int* dash, int** objects)
+int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object** ret_objects, int* ret_num_objs)
 {
+    int i, j, k, l;
+    int num_objs = 0;
+    int max_level = 0;
+    uint8_t cross_flag;
+    object* objects = (object *) malloc(num_dashs * sizeof(object));
+    dash*** dashes_one_level = (dash***) malloc(im_height * sizeof(dash**));
+    int* num_dashes_one_level = (int*) malloc(im_height * sizeof(int));
+    for (int i = 0; i < im_height; ++i)
+    {
+        dashes_one_level[i] = (dash**) malloc(MAX_DASHES * sizeof(dash*));
+    }
+    memset(num_dashes_one_level, 0, sizeof(int) * im_height);
+    memset(objects, 0, sizeof(object) * num_dashs);
+    for (i = 0; i < num_dashs; ++i)
+    {
+        dashes_one_level[dashes[i].y][num_dashes_one_level[dashes[i].y]++] = &dashes[i];
+        if (max_level < dashes[i].y)
+        {
+            max_level = dashes[i].y;
+        }
+    }
+    if (num_dashes_one_level[0] > 0) {
+        for (i = 0; i < num_dashes_one_level[0]; ++i) {
+            objects[num_objs].dash_count = 1;
+            objects[num_objs].dashes[0] = dashes_one_level[0][i];
+            num_objs++;
+        }
+    }
+
+    for (i = 1; i < max_level; ++i)
+    {
+        if (num_dashes_one_level[i] == 0)
+            continue;
+
+        for (j = 0; j < num_dashes_one_level[i]; ++j)
+        {
+            cross_flag = 0;
+
+            for (k = 0; k < num_objs; ++k)
+            {
+                for (l = 0; l < objects[k].dash_count; ++l)
+                {
+                    if (objects[k].dashes[l]->y == (i - 1) && check_cross(dashes_one_level[i][j], objects[k].dashes[l]) == 1)
+                    {
+                        cross_flag = 1;
+                        objects[k].dashes[objects[k].dash_count++] = dashes_one_level[i][j];
+                    }
+                }
+            }
+
+            if (cross_flag == 0)
+            {
+                objects[num_objs].dash_count = 1;
+                objects[num_objs].dashes[0] = dashes_one_level[i][j];
+            }
+        }
+    }
+
+    *ret_objects = objects;
+    *ret_num_objs = num_objs;
     return 0;
 }
 
