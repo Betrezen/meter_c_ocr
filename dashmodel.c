@@ -34,7 +34,7 @@ int do_linerezation(char* binary_image, int width, int height, dash** dashes, in
         xmax = width;
     }
 
-    *dashes = (int*) malloc(sizeof(dash) * width * height);
+    *dashes = (dash*) malloc(sizeof(dash) * width * height);
 
     for (y=0; y<height; y++) {
         mad = 0;
@@ -136,11 +136,11 @@ int check_cross_lists(int* obj1, int obj1_count, int* obj2, int obj2_count)
     return 0;
 }
 
-inline int min(int val1, int val2)
+static int min(int val1, int val2)
 {
     return val1 < val2 ? val1 : val2;
 }
-inline int max(int val1, int val2)
+static int max(int val1, int val2)
 {
     return val1 > val2 ? val1 : val2;
 }
@@ -300,7 +300,7 @@ int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object
             {
                 for (l = 0; l < objects[k].dash_count; ++l)
                 {
-                    if (objects[k].dashes[l]->y == (i - 1) && check_cross(dashes_one_level[i][j], objects[k].dashes[l]) == 1)
+                    if (objects[k].dashes[l]->y == (i - 1) && check_cross((int*)dashes_one_level[i][j], (int*)objects[k].dashes[l]) == 1)
                     {
                         cross_flag = 1;
                         objects[k].dashes[objects[k].dash_count++] = dashes_one_level[i][j];

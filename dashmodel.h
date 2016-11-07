@@ -38,7 +38,7 @@ int check_cross(int* line1, int* line2); // line [x,y,width]; return true/false
 // obj1=[line1, line2, line3....]
 int check_cross_lists(int* obj1, int obj1_count, int* obj2, int obj2_count);
 // obj1 = [dash_count1, bbox_x1, bbox_y1, width1, heigh1, dash1...dashm]
-int check_cross_objs(object* obj1, object* obj2, int im_height)
+int check_cross_objs(object* obj1, object* obj2, int im_height);
 
 int intersection_in_one_level
 (
@@ -52,7 +52,7 @@ int intersection_in_levels
     int *num_obj1_dashes_on_level, int *num_obj2_dashes_on_level,
     dash*** obj1_dashes_on_level, dash*** obj2_dashes_on_level,
     int level1, int level2
-)
+);
 
 // objects = [dash_count1, bbox_x1, bbox_y1, width1, heigh1, dash1...dashm; 
 //       .....dash_count_n, bbox_xn, bbox_yn, widthn, heighn, dash_n1, dash_nm;]
