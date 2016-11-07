@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     draw_binary_image(png_binary_image, width, height, bbox);
     printf("draw_binary_image competed is OK\n");
         
-    int bbox2[4] = {66, 175, 120, 4};
+    int bbox2[4] = {66, 175, 120, 21};
     do_linerezation(png_binary_image, width, height, &dash_image, bbox2, &dash_count);
     printf("do_linerezation competed is OK. dash_count=%d\n", dash_count);
 
@@ -52,12 +52,12 @@ int main(int argc, char **argv)
     //draw_dashs(dash_image, dash_count, 177);
 
     //why 9*3 - because each item is x,y,width.... one array with periodic x,y,w....x,y,w....
-    check_cross((int*)&dash_image[0], (int*)&dash_image[9]);
-    printf("\n\n\n");
+    //check_cross((int*)&dash_image[0], (int*)&dash_image[9]);
+    //printf("\n\n\n");
 
-    check_cross_lists((int*)&dash_image[0], 8, (int*)&dash_image[9], 8);
-    check_cross_lists((int*)&dash_image[1], 7, (int*)&dash_image[9], 8);
-    printf("\n\n\n");
+    //check_cross_lists(&dash_image[0], 8, (int*)&dash_image[9], 8);
+    //check_cross_lists((int*)&dash_image[1], 7, (int*)&dash_image[9], 8);
+    //printf("\n\n\n");
 
     printf("\n get_objects: \n");
     get_objects(width, height, dash_image, dash_count, &objects, &num_objects);    

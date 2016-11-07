@@ -36,33 +36,33 @@ int do_linerezation(char* binary_image, int width, int height, dash** dashes, in
 
     *dashes = (dash*) malloc(sizeof(dash) * width * height);
 
-    for (y=0; y<height; y++) {
+    for (y = ymin; y < ymax; y++)
+    {
         mad = 0;
-        for (x=0; x<width; x++) {
-            if (y > ymin && y < ymax && x > xmin && x < xmax){
-                position = y*width + x;
-                if (binary_image[position] > 0){
-                    ++mad;
+        for (x = xmin; x < xmax; x++)
+        {
+            printf("[%d,%d]\n", x, y);
+            position = y * width + x;
+            if (binary_image[position] > 0)
+            {
+                ++mad;
+            }
+            else
+            {
+                if (mad >= MIN_ALLOW_DASH_LENGTH)
+                {
+                    (*dashes)[*dash_count].x = x-mad;
+                    (*dashes)[*dash_count].y = y;
+                    (*dashes)[*dash_count].width = mad;
+                    ++(*dash_count);
                 }
-                else{
-                    if (mad < MIN_ALLOW_DASH_LENGTH){
-                        mad = 0;
-                    }
-                    else{
-                        (*dashes)[*dash_count].x = x-mad;
-                        (*dashes)[*dash_count].y = y;
-                        (*dashes)[*dash_count].width = mad;
-                        ++(*dash_count);
-                        //printf("x=%d, y=%d, w=%d\n", x,y,mad);
-                        mad=0;
-                    }
-                }
+                mad = 0;
             }
         }
     }
 }
 
-int check_cross(int* line1, int* line2)
+int check_cross(dash* line1, dash* line2)
 {
     /* we should find several cases if line1 and line2 have cross by X ordinat
         line = (x,y,weight) -> *--- -> x,y= * and weight= ---
@@ -91,12 +91,12 @@ int check_cross(int* line1, int* line2)
                       x2-----------x22
     */
 
-    int x1 = line1[0];
-    int y1 = line1[1];
-    int x11 = line1[0]+line1[2];
-    int x2 = line2[0];
-    int y2 = line2[1];
-    int x22 = line2[0]+line2[2];
+    int x1 = line1->x;
+    int y1 = line1->y;
+    int x11 = line1->x+line1->width;
+    int x2 = line2->x;
+    int y2 = line2->y;
+    int x22 = line2->x+line2->width;
     printf("\nline1[%d,%d--%d] line2[%d, %d--%d], mac=%d, macd=%d  ", y1, x1,x11, y2, x2, x22, MIN_ALLOW_DASH_LENGTH, MIN_ALLOW_CROSS_LENGTH);
 
     if(((x11-x1) < MIN_ALLOW_DASH_LENGTH) || ((x22-x2) < MIN_ALLOW_DASH_LENGTH)){
@@ -124,12 +124,14 @@ int check_cross(int* line1, int* line2)
 }
 
 // obj1=[line1, line2, line3....]
-int check_cross_lists(int* obj1, int obj1_count, int* obj2, int obj2_count)
+int check_cross_lists(object* obj1, object* obj2)
 {
-    int i,j;
-    for (i=0; i<obj1_count; i++){
-        for (j=0; j<obj2_count; j++){
-            if (check_cross((obj1+i*3), (obj2+j*3)))
+    int i, j;
+    for (i = 0; i < obj1->dash_count; i++)
+    {
+        for (j = 0; j < obj2->dash_count; j++)
+        {
+            if (check_cross(obj1->dashes[i], obj2->dashes[i]))
                 return 1;
         }
     }
@@ -268,7 +270,8 @@ int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object
     object* objects = (object *) malloc(num_dashs * sizeof(object));
     dash*** dashes_one_level = (dash***) malloc(im_height * sizeof(dash**));
     int* num_dashes_one_level = (int*) malloc(im_height * sizeof(int));
-    for (int i = 0; i < im_height; ++i)
+
+    for (i = 0; i < im_height; ++i)
     {
         dashes_one_level[i] = (dash**) malloc(MAX_DASHES * sizeof(dash*));
     }
@@ -286,7 +289,7 @@ int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object
             min_level = dashes[i].y;
         }
     }
-    
+
     // we are looking at mountain and find peak. There are initial objects here. 
     //if (num_dashes_one_level[mix_level] > 0) {
     //    for (i = 0; i < num_dashes_one_level[mix_level]; ++i) {
@@ -309,7 +312,7 @@ int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object
             {
                 for (l = 0; l < objects[k].dash_count; ++l)
                 {
-                    if (objects[k].dashes[l]->y == (i - 1) && check_cross((int*)dashes_one_level[i][j], (int*)objects[k].dashes[l]) == 1)
+                    if (objects[k].dashes[l]->y == (i - 1) && check_cross(dashes_one_level[i][j], objects[k].dashes[l]) == 1)
                     {
                         cross_flag = 1;
                         objects[k].dashes[objects[k].dash_count++] = dashes_one_level[i][j];

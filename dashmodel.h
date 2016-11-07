@@ -34,9 +34,9 @@ typedef struct {
 // **dashs because  memory allocation otherwise malloc will replace addr
 int do_linerezation(char* binary_image, int width, int height, dash** dashes, int box[4], int* dash_count);
 
-int check_cross(int* line1, int* line2); // line [x,y,width]; return true/false
+int check_cross(dash* line1, dash* line2); // line [x,y,width]; return true/false
 // obj1=[line1, line2, line3....]
-int check_cross_lists(int* obj1, int obj1_count, int* obj2, int obj2_count);
+int check_cross_lists(object* obj1, object* obj2);
 // obj1 = [dash_count1, bbox_x1, bbox_y1, width1, heigh1, dash1...dashm]
 int check_cross_objs(object* obj1, object* obj2, int im_height);
 
