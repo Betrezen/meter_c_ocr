@@ -136,6 +136,8 @@ int check_cross_lists(int* obj1, int obj1_count, int* obj2, int obj2_count)
     return 0;
 }
 
+
+
 static int min(int val1, int val2)
 {
     return val1 < val2 ? val1 : val2;
@@ -261,6 +263,7 @@ int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object
     int i, j, k, l;
     int num_objs = 0;
     int max_level = 0;
+    int min_level = im_height;
     uint8_t cross_flag;
     object* objects = (object *) malloc(num_dashs * sizeof(object));
     dash*** dashes_one_level = (dash***) malloc(im_height * sizeof(dash**));
@@ -278,16 +281,22 @@ int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object
         {
             max_level = dashes[i].y;
         }
-    }
-    if (num_dashes_one_level[0] > 0) {
-        for (i = 0; i < num_dashes_one_level[0]; ++i) {
-            objects[num_objs].dash_count = 1;
-            objects[num_objs].dashes[0] = dashes_one_level[0][i];
-            num_objs++;
+        if (min_level > dashes[i].y)
+        {
+            min_level = dashes[i].y;
         }
     }
+    
+    // we are looking at mountain and find peak. There are initial objects here. 
+    //if (num_dashes_one_level[mix_level] > 0) {
+    //    for (i = 0; i < num_dashes_one_level[mix_level]; ++i) {
+    //        objects[num_objs].dash_count = 1;
+    //        objects[num_objs].dashes[0] = dashes_one_level[mix_level][i];
+    //        num_objs++;
+    //    }
+    //}
 
-    for (i = 1; i < max_level; ++i)
+    for (i = min_level; i < max_level; ++i)
     {
         if (num_dashes_one_level[i] == 0)
             continue;
@@ -312,6 +321,7 @@ int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object
             {
                 objects[num_objs].dash_count = 1;
                 objects[num_objs].dashes[0] = dashes_one_level[i][j];
+                num_objs++;
             }
         }
     }
@@ -330,18 +340,26 @@ int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object
 
 void get_bbox(object* obj, int bbox[4])
 {
-    int i;
+    int i, xmin=INT_MAX, xmax=0, ymin=INT_MAX, ymax=0;
     bbox[0] = INT_MAX;
     bbox[1] = INT_MAX;
     bbox[2] = 0;
     bbox[3] = 0;
     for (i = 0; i < obj->dash_count; ++i)
     {
-        bbox[0] = (obj->dashes[i]->x < bbox[0]) ? obj->dashes[i]->x : bbox[0];
-        bbox[1] = (obj->dashes[i]->y < bbox[1]) ? obj->dashes[i]->y : bbox[1];
-        bbox[2] = ((obj->dashes[i]->x + obj->dashes[i]->width) < bbox[2]) ? (obj->dashes[i]->x + obj->dashes[i]->width) : bbox[2];
-        bbox[3] = (obj->dashes[i]->y > bbox[3]) ? obj->dashes[i]->y : bbox[3];
+        if (xmin > obj->dashes[i]->x)
+            xmin = obj->dashes[i]->x;
+        if (ymin > obj->dashes[i]->y)
+            ymin = obj->dashes[i]->y;
+        if (xmax < (obj->dashes[i]->x + obj->dashes[i]->width))
+            xmax = (obj->dashes[i]->x + obj->dashes[i]->width);
+        if (ymax < obj->dashes[i]->y)
+            ymax = obj->dashes[i]->y;
     }
+    bbox[0] = xmin;
+    bbox[1] = ymin;
+    bbox[2] = xmax;
+    bbox[3] = ymax;
 }
 
 //objects - list of objects whcih shall be combined
@@ -419,10 +437,30 @@ int draw_dashs(int* dash, int dash_count, int ylevel)
     }
 }
 
-int draw_object(int* obj)
+int draw_object(object* obj, int bbox[4])
 {
+    int i, j, k, xmin=bbox[0], xmax=bbox[2], ymin=bbox[1], ymax=bbox[3];
+    for (i=ymin; i<=ymax; i++){
+        for (j=xmin; j<=xmax; j++){
+            for (k=0; k<obj->dash_count; k++){
+                if (obj->dashes[k]->y == i){
+                    if (j > (obj->dashes[k]->x) && j <= (obj->dashes[k]->x + obj->dashes[k]->width))
+                    {
+                        printf("*");
+                    }
+                    else{
+                        printf("-");   
+                    }
+
+                }
+
+            }
+        }
+        printf("\n");
+    }
     return 0;
 }
+
 int draw_bbox_object(int* obj)
 {
     return 0;

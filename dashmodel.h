@@ -67,7 +67,8 @@ int do_objects_filtering(int* objects);
 // box = [x,y,width,height]
 int draw_binary_image(char* binary_image, int width, int height, int* box);
 int draw_dashes(dash* dashes, int dash_count, int y);
-int draw_object(int* obj);
+
+int draw_object(object* obj, int bbox[4]);
 int draw_bbox_object(int* obj);
 
 int dash_model_run(char* binary_image, int width, int height);
