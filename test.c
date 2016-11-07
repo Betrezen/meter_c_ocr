@@ -72,10 +72,13 @@ int main(int argc, char **argv)
     printf("\n\n\n");
 
     printf("\n draw_object: \n");
-    object* obj2 = &objects[0];
-    int bbox4[4];    
-    get_bbox(obj2, bbox4);
-    draw_object(obj2, bbox4);
+    int bbox4[4];
+    for (int i=0; i<num_objects; i++){
+        object* obj2 = &objects[i];
+        get_bbox(obj2, bbox4);
+        draw_object(obj2, bbox4);
+        printf("\n ///////////////////////// \n");
+    }
     printf("\n\n\n");
 
     return 0;
