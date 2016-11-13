@@ -182,24 +182,24 @@ int check_cross_objs(object* obj1, object* obj2, int im_height)
     // then dont need to do analysis because nothing can be compare
     // if we don't have the same lines in both objects then need find cross
 
-    int i = 0, j, k;
+    int i = 0;
     int result;
     int obj1_min_h = INT_MAX, obj1_max_h = 0;
     int obj2_min_h = INT_MAX, obj2_max_h = 0;
 
     int target_min, target_max;
-    int int_line_x1, int_line_x2;
     int* num_obj1_dashes_on_level = (int*) malloc(sizeof(int) * im_height);
     dash*** obj1_dashes_on_level = (dash***) malloc(sizeof(dash**) * im_height);
+    for (i = 0; i < im_height; ++i)
+        obj1_dashes_on_level[i] = malloc(sizeof(dash*) * MAX_DASHES);
+
     int* num_obj2_dashes_on_level = (int*) malloc(sizeof(int) * im_height);
     dash*** obj2_dashes_on_level = (dash***) malloc(sizeof(dash**) * im_height);
     for (i = 0; i < im_height; ++i)
-    {
-        obj1_dashes_on_level[i] = malloc(sizeof(dash*) * MAX_DASHES);
         obj2_dashes_on_level[i] = malloc(sizeof(dash*) * MAX_DASHES);
-    }
-    memset(num_obj1_dashes_on_level, 0, im_height);
-    memset(num_obj2_dashes_on_level, 0, im_height);
+
+    memset(num_obj1_dashes_on_level, 0, im_height * sizeof(int));
+    memset(num_obj2_dashes_on_level, 0, im_height * sizeof(int));
 
     for (i = 0; i < obj1->dash_count; ++i)
     {
@@ -366,9 +366,37 @@ void get_bbox(object* obj, int bbox[4])
 }
 
 //objects - list of objects whcih shall be combined
-int do_combination(int* objects)
+int do_combination(object* objects, int* num_objs, int im_height)
 {
+    int i, j, k;
+    int obj_num = *num_objs;
+    int merged;
 
+    object for_swap;
+
+    for (i = 0; i < obj_num; ++i)
+    {
+        merged = 0;
+        for (j = 0; j < obj_num && merged == 0; ++j)
+        {
+            if (i == j)
+                continue;
+
+            if (check_cross_objs(&objects[i], &objects[j], im_height) == 1)
+            {
+                for (k = 0; k < objects[j].dash_count; ++k)
+                {
+                    objects[i].dashes[objects[i].dash_count + k] = objects[j].dashes[k];
+                }
+                for_swap = objects[j];
+                objects[j] = objects[obj_num - 1];
+                objects[obj_num - 1] = for_swap;
+                obj_num--;
+                merged = 1;
+            }
+        }
+    }
+    *num_objs = obj_num;
     return 0;
 }
 
@@ -378,21 +406,20 @@ int do_objects_filtering (object* objects, int num_objs,
 {
     // if bbox has 0, 0, 0, 0 that means we do not do filtering by bbox
     // if num_dashs has 0 than means we do not do filtering by num dashes
-    int i,j;
+    int i, j;
     int obj_bbox[4];
     int variant=0;
 
-    count_indexes = 0;
     *object_indexes = (int*) malloc(sizeof(int) * num_objs);
 
-    if (bbox[0] == 0 && bbox[1] == 0 && bbox[0]==bbox[2] && bbox[1] == bbox[3])
+    if (bbox[0] == 0 && bbox[1] == 0 && bbox[0] == bbox[2] && bbox[1] == bbox[3])
         variant = 1;
     else if (num_dashs == 0)
         variant = 2;
     
-    printf("\n varian=%d", variant);
+    printf("\n variant = %d", variant);
     
-    for (i=0, j=0; i < num_objs; i++)
+    for (i = 0, j = 0; i < num_objs; i++)
     {
         
         if (variant == 1)
@@ -400,20 +427,18 @@ int do_objects_filtering (object* objects, int num_objs,
             get_bbox(&objects[i], obj_bbox);
             if ((obj_bbox[2]-obj_bbox[0]) >= (bbox[2]-bbox[0]) &&
                 (obj_bbox[3]-obj_bbox[1]) >= (bbox[3]-bbox[1]))
-                *object_indexes[j++] = i;
-                count_indexes++;
+                (*object_indexes)[j++] = i;
         }
         else if (variant == 2 && objects[i].dash_count >= num_dashs)
         {
-            *object_indexes[j++] = i;
-            count_indexes++;
+            (*object_indexes)[j++] = i;
         }
         else
         {
-            *object_indexes[j++] = i;
-            count_indexes++;
+            (*object_indexes)[j++] = i;
         }
     }
+    *count_indexes = j;
     return 0;
 }
 

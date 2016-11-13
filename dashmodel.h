@@ -60,7 +60,7 @@ int intersection_in_levels
 int get_objects(int im_width, int im_height, dash* dashes, int num_dashs, object** ret_objects, int* ret_num_objs);
 void get_bbox(object* obj, int bbox[4]);
 //objects - list of objects whcih shall be combined
-int do_combination(int* objects);
+int do_combination(object* objects, int* num_objs, int im_height);
 
 int do_objects_filtering (object* objects, int num_objs, int bbox[4], int num_dashs, int** object_indexes, int* count_indexes);
 

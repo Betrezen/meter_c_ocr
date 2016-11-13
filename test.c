@@ -71,6 +71,10 @@ int main(int argc, char **argv)
     }
     printf(" IS OK\n");
 
+    printf("do_combination: num_objs before = %d\n", num_objects);
+    do_combination(objects, &num_objects, height);
+    printf("do_combination: num_objs after = %d\n", num_objects);
+
     printf("\ndo_objects_filtering:");
     int bbox5[4] = {0,0,10,5};
     int* obj_indexes;
