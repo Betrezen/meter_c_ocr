@@ -59,27 +59,36 @@ int main(int argc, char **argv)
     //check_cross_lists((int*)&dash_image[1], 7, (int*)&dash_image[9], 8);
     //printf("\n\n\n");
 
-    printf("\n get_objects: \n");
+    printf("\nget_objects:");
     get_objects(width, height, dash_image, dash_count, &objects, &num_objects);    
-    printf("\n\n\n");
+    printf(" IS OK\n");
 
-    printf("\n get_bbox: \n");
+    printf("\nget_bbox:");
     for (int i=0; i<num_objects; i++){
         object* obj = &objects[i];
         get_bbox(obj, bbox3);
-        printf("bbox: %d-%d; %d-%d\n", bbox3[0], bbox3[1], bbox3[2], bbox3[3]);
+        //printf("bbox: %d-%d; %d-%d\n", bbox3[0], bbox3[1], bbox3[2], bbox3[3]);
     }
-    printf("\n\n\n");
+    printf(" IS OK\n");
 
+    printf("\ndo_objects_filtering:");
+    int bbox5[4] = {0,0,10,5};
+    int* obj_indexes;
+    int count_obj_indexes;
+    do_objects_filtering(objects, num_objects, bbox5, 0, &obj_indexes, &count_obj_indexes);
+    printf(" IS OK\n");
+
+    /* working fine
     printf("\n draw_object: \n");
     int bbox4[4];
     for (int i=0; i<num_objects; i++){
         object* obj2 = &objects[i];
         get_bbox(obj2, bbox4);
         draw_object(obj2, bbox4);
-        printf("\n ///////////////////////// \n");
+        printf("\n === \n");
     }
     printf("\n\n\n");
+    */
 
     return 0;
 }

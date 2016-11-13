@@ -41,7 +41,7 @@ int do_linerezation(char* binary_image, int width, int height, dash** dashes, in
         mad = 0;
         for (x = xmin; x < xmax; x++)
         {
-            printf("[%d,%d]\n", x, y);
+            //printf("[%d,%d]\n", x, y);
             position = y * width + x;
             if (binary_image[position] > 0)
             {
@@ -97,29 +97,29 @@ int check_cross(dash* line1, dash* line2)
     int x2 = line2->x;
     int y2 = line2->y;
     int x22 = line2->x+line2->width;
-    printf("\nline1[%d,%d--%d] line2[%d, %d--%d], mac=%d, macd=%d  ", y1, x1,x11, y2, x2, x22, MIN_ALLOW_DASH_LENGTH, MIN_ALLOW_CROSS_LENGTH);
+    //printf("\nline1[%d,%d--%d] line2[%d, %d--%d], mac=%d, macd=%d  ", y1, x1,x11, y2, x2, x22, MIN_ALLOW_DASH_LENGTH, MIN_ALLOW_CROSS_LENGTH);
 
     if(((x11-x1) < MIN_ALLOW_DASH_LENGTH) || ((x22-x2) < MIN_ALLOW_DASH_LENGTH)){
-        printf("DONT CROSS: case_00");
+        //printf("DONT CROSS: case_00");
         return -1;
     }
     if(x1 <= x2 && x11 <= x22 && x11 >= x2 && (x11-x2) >= MIN_ALLOW_CROSS_LENGTH) {
-        printf("CROSS: case_a");
+        //printf("CROSS: case_a");
         return 1;
     }
     if(x1 >= x2 && x11 >= x22 && x22 >= x1 && (x22-x1) >= MIN_ALLOW_CROSS_LENGTH) {
-        printf("CROSS: case_b");
+        //printf("CROSS: case_b");
         return 1;
     }
     if(x1 >= x2 && x11 <= x22 && (x11-x1) >= MIN_ALLOW_CROSS_LENGTH) {
-        printf("CROSS: case_c");
+        //printf("CROSS: case_c");
         return 1;
     }
     if(x1 <= x2 && x11 >= x22 && (x22-x2) >= MIN_ALLOW_CROSS_LENGTH) {
-        printf("CROSS: case_d");
+        //printf("CROSS: case_d");
         return 1;
     }
-    printf("DONT CROS: case_0");
+    //printf("DONT CROS: case_0");
     return 0;
 }
 
@@ -371,8 +371,49 @@ int do_combination(int* objects)
 
     return 0;
 }
-int do_objects_filtering(int* objects)
+
+int do_objects_filtering (object* objects, int num_objs,
+    int bbox[4], int num_dashs,
+    int** object_indexes, int* count_indexes)
 {
+    // if bbox has 0, 0, 0, 0 that means we do not do filtering by bbox
+    // if num_dashs has 0 than means we do not do filtering by num dashes
+    int i,j;
+    int obj_bbox[4];
+    int variant=0;
+
+    count_indexes = 0;
+    *object_indexes = (int*) malloc(sizeof(int) * num_objs);
+
+    if (bbox[0] == 0 && bbox[1] == 0 && bbox[0]==bbox[2] && bbox[1] == bbox[3])
+        variant = 1;
+    else if (num_dashs == 0)
+        variant = 2;
+    
+    printf("\n varian=%d", variant);
+    
+    for (i=0, j=0; i < num_objs; i++)
+    {
+        
+        if (variant == 1)
+        {
+            get_bbox(&objects[i], obj_bbox);
+            if ((obj_bbox[2]-obj_bbox[0]) >= (bbox[2]-bbox[0]) &&
+                (obj_bbox[3]-obj_bbox[1]) >= (bbox[3]-bbox[1]))
+                *object_indexes[j++] = i;
+                count_indexes++;
+        }
+        else if (variant == 2 && objects[i].dash_count >= num_dashs)
+        {
+            *object_indexes[j++] = i;
+            count_indexes++;
+        }
+        else
+        {
+            *object_indexes[j++] = i;
+            count_indexes++;
+        }
+    }
     return 0;
 }
 

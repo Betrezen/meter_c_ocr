@@ -62,7 +62,7 @@ void get_bbox(object* obj, int bbox[4]);
 //objects - list of objects whcih shall be combined
 int do_combination(int* objects);
 
-int do_objects_filtering(int* objects);
+int do_objects_filtering (object* objects, int num_objs, int bbox[4], int num_dashs, int** object_indexes, int* count_indexes);
 
 // box = [x,y,width,height]
 int draw_binary_image(char* binary_image, int width, int height, int* box);
